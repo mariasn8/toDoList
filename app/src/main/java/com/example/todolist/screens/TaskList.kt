@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
@@ -101,13 +102,13 @@ fun TaskItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 12.dp, vertical = 8.dp)
             .clickable { onEdit() }, // Clicking the whole card also edits
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(12.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -139,22 +140,54 @@ fun TaskItem(
                 )
 
                 Text(
-                    text = "Due: ${formatDate(task.dueTime)}",
+                    text = "Description: ${task.description}",
+                    fontWeight = FontWeight.SemiBold,
                     style = if (task.isCompleted)
                         MaterialTheme.typography.bodySmall.copy(textDecoration = TextDecoration.LineThrough)
-                    else MaterialTheme.typography.bodySmall,
-                    color = if (task.dueTime < System.currentTimeMillis() && !task.isCompleted) Color.Red else Color.Gray
+                    else MaterialTheme.typography.bodySmall
                 )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Due: ${formatDate(task.dueTime)}",
+                        fontWeight = FontWeight.SemiBold,
+                        style = if (task.isCompleted)
+                            MaterialTheme.typography.bodySmall.copy(textDecoration = TextDecoration.LineThrough)
+                        else MaterialTheme.typography.bodySmall,
+                        color = if (task.dueTime < System.currentTimeMillis() && !task.isCompleted) Color.Red else Color.DarkGray
+                    )
+
+                    if (task.attachmentPath.isNotEmpty()) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.Default.AttachFile,
+                            contentDescription = "Attachments",
+                            modifier = Modifier.size(16.dp)
+                        )
+                        // Show the count of files
+                        Text(
+                            text = "(${task.attachmentPath.size})",
+                            fontWeight = FontWeight.SemiBold,
+                            style = if (task.isCompleted)
+                                MaterialTheme.typography.bodySmall.copy(textDecoration = TextDecoration.LineThrough)
+                            else MaterialTheme.typography.bodySmall
+                        )
+                    }
+
+                }
             }
 
             // Edit Button
             IconButton(onClick = onEdit) {
-                Icon(Icons.Default.Edit, contentDescription = "Edit Task", tint = Color.Gray)
+                Icon(Icons.Default.Edit,
+                    contentDescription = "Edit Task",
+                    tint = Color.Gray)
             }
 
             // Delete Button
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete Task", tint = Color.Gray)
+                Icon(Icons.Default.Delete,
+                    contentDescription = "Delete Task",
+                    tint = Color.Gray)
             }
         }
     }

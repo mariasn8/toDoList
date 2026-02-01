@@ -1,14 +1,25 @@
 package com.example.todolist
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.todolist.DB.Task
+import com.example.todolist.FileHelper // Import your new helper
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -37,8 +48,26 @@ fun AddTask(
         mutableStateOf(taskToEdit?.notificationTimeOffset?.toString() ?: "10")
     }
 
+    var attachments by remember(taskToEdit) {
+        mutableStateOf(taskToEdit?.attachmentPath ?: emptyList())
+    }
+
     var showDatePicker by remember { mutableStateOf(false) }
     val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+    val context = LocalContext.current
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetMultipleContents() // Opens system file picker
+    ) { uris: List<Uri> ->
+        uris.forEach { uri ->
+            // Copy file to app storage
+            val path = FileHelper.copyUriToInternalStorage(context, uri)
+            if (path != null) {
+                // Add the new path to our list
+                attachments = attachments + path
+            }
+        }
+    }
 
     // Date Picker Dialog Logic
     if (showDatePicker) {
@@ -62,7 +91,9 @@ fun AddTask(
         title = { Text(text = if (taskToEdit == null) "New Task" else "Edit Task") },
         text = {
             Column(
-                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                modifier = Modifier.fillMaxWidth()
+                    .padding(8.dp)
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedTextField(
@@ -114,8 +145,45 @@ fun AddTask(
                         singleLine = true
                     )
                 }
+
+                Divider()
+
+                Text("Attachments:", style = MaterialTheme.typography.titleSmall)
+
+                // List of added attachments
+                attachments.forEach { path ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                            .clickable { FileHelper.openFile(context, path) }
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Display just the filename
+                        Text(
+                            text = File(path).name,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.weight(1f)
+                        )
+                        // Delete button
+                        IconButton(onClick = {
+                            attachments = attachments - path
+                        }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Remove attachment", tint = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
+
+                // Add Attachment Button
+                Button(
+                    onClick = { launcher.launch("*/*") }, // Allow any file type
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Add Attachment")
+                }
             }
         },
+
         confirmButton = {
             Button(
                 onClick = {
@@ -135,7 +203,7 @@ fun AddTask(
                             isCompleted = taskToEdit?.isCompleted ?: false,
                             notificationEnabled = isNotificationEnabled,
                             notificationTimeOffset = notificationOffset.toIntOrNull() ?: 10,
-                            attachmentPath = taskToEdit?.attachmentPath ?: emptyList()
+                            attachmentPath = attachments
                         )
                         onSaveTask(taskToSave)
                         onDismiss()

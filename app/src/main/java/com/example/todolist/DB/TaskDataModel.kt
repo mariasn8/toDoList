@@ -14,5 +14,5 @@ data class Task(
     val category: String,
     val notificationEnabled: Boolean,
     val notificationTimeOffset: Int, // Minutes before deadline
-    val attachmentPath: List<String> = emptyList() // For photo/file URI [cite: 99]
+    val attachmentPath: List<String> = emptyList()
 )

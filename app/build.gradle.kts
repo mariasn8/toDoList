@@ -68,6 +68,8 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("androidx.compose.runtime:runtime-livedata")
 
+    implementation("androidx.compose.material:material-icons-extended")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

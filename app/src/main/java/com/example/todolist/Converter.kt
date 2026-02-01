@@ -8,7 +8,7 @@ class Converters {
     @TypeConverter
     fun fromString(value: String): List<String> {
         val listType = object : TypeToken<List<String>>() {}.type
-        return Gson().fromJson(value, listType)
+        return Gson().fromJson(value, listType) ?: emptyList()
     }
 
     @TypeConverter
