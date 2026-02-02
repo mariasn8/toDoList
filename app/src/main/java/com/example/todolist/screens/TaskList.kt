@@ -1,6 +1,5 @@
 package com.example.todolist.screens
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -13,6 +12,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,7 +24,6 @@ import com.example.todolist.DB.Task
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import androidx.compose.material3.FilterChip
 
 @Composable
 fun TaskList(
@@ -37,12 +36,14 @@ fun TaskList(
     modifier: Modifier = Modifier
 ) {
 
-    var hideCompleted by remember { mutableStateOf(false) }
+    var hideCompleted by rememberSaveable { mutableStateOf(false) }
 
-    val allCategories = remember(tasks) {
+    val allCategories = rememberSaveable (tasks) {
         tasks.map { it.category }.distinct().sorted()
     }
-    var selectedCategories by remember { mutableStateOf(emptySet<String>()) }
+    var selectedCategories by rememberSaveable {
+        mutableStateOf(emptySet<String>())
+    }
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -88,7 +89,7 @@ fun TaskList(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(allCategories) { category ->
@@ -203,6 +204,15 @@ fun TaskItem(
                         MaterialTheme.typography.bodySmall.copy(textDecoration = TextDecoration.LineThrough)
                     else MaterialTheme.typography.bodySmall
                 )
+
+                Text(
+                    text = "Created: ${formatDate(task.creationTime)}",
+                    fontWeight = FontWeight.SemiBold,
+                    style = if (task.isCompleted)
+                        MaterialTheme.typography.bodySmall.copy(textDecoration = TextDecoration.LineThrough)
+                    else MaterialTheme.typography.bodySmall
+                )
+
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = "Due: ${formatDate(task.dueTime)}",

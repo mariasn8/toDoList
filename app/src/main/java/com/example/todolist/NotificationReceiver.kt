@@ -23,7 +23,7 @@ class NotificationReceiver : BroadcastReceiver() {
 
         val notification = NotificationCompat.Builder(context, "task_channel")
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("Task due soon")
+            .setContentTitle("Task $title due soon")
             .setContentText(title)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)

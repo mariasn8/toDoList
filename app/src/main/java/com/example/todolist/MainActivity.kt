@@ -19,16 +19,13 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
 import com.example.todolist.DB.*
 import com.example.todolist.screens.*
-import com.example.todolist.*
 import com.example.todolist.ui.theme.ToDoListTheme
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
-import android.Manifest
-import androidx.core.app.ActivityCompat
-import android.content.pm.PackageManager
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.saveable.rememberSaveable
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,16 +34,9 @@ class MainActivity : ComponentActivity() {
         // 1. Create Channel
         createNotificationChannel()
 
-        // 2. Request Permission (Simple version)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
-            }
-        }
-
         enableEdgeToEdge()
 
-        // 3. Initialize DB and ViewModel
+        // 2. Initialize DB and ViewModel
         val database = ToDoDatabase.getDatabase(this)
         val viewModelFactory = ToDoViewModelFactory(database.taskDao())
         val viewModel = ViewModelProvider(this, viewModelFactory)[ToDoViewModel::class.java]
@@ -54,10 +44,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             ToDoListTheme {
                 // State variables
-                var showDialog by remember { mutableStateOf(false) }
-                var searchQuery by remember { mutableStateOf("") }
+                var showDialog by rememberSaveable { mutableStateOf(false) }
+                var searchQuery by rememberSaveable { mutableStateOf("") }
 
-                var taskToEdit by remember { mutableStateOf<Task?>(null) }
+                var taskToEdit by rememberSaveable { mutableStateOf<Task?>(null) }
 
                 // Observe the list of tasks from the database
                 val tasks by viewModel.tasks.observeAsState(initial = emptyList())

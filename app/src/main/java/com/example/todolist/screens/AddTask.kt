@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -32,30 +33,30 @@ fun AddTask(
     onSaveTask: (Task) -> Unit
 ) {
     // Initialize state with existing task data if available, otherwise empty/default
-    var title by remember(taskToEdit) { mutableStateOf(taskToEdit?.title ?: "") }
-    var description by remember(taskToEdit) { mutableStateOf(taskToEdit?.description ?: "") }
-    var category by remember(taskToEdit) { mutableStateOf(taskToEdit?.category ?: "") }
+    var title by rememberSaveable (taskToEdit) { mutableStateOf(taskToEdit?.title ?: "") }
+    var description by rememberSaveable(taskToEdit) { mutableStateOf(taskToEdit?.description ?: "") }
+    var category by rememberSaveable(taskToEdit) { mutableStateOf(taskToEdit?.category ?: "") }
 
     // Default to tomorrow if new, or use existing due time
-    var dueTime by remember(taskToEdit) {
+    var dueTime by rememberSaveable(taskToEdit) {
         mutableLongStateOf(taskToEdit?.dueTime ?: (System.currentTimeMillis() )) // + 86400000
     }
 
-    var isNotificationEnabled by remember(taskToEdit) {
+    var isNotificationEnabled by rememberSaveable(taskToEdit) {
         mutableStateOf(taskToEdit?.notificationEnabled ?: false)
     }
-    var notificationOffset by remember(taskToEdit) {
+    var notificationOffset by rememberSaveable(taskToEdit) {
         mutableStateOf(taskToEdit?.notificationTimeOffset?.toString() ?: "10")
     }
 
-    var attachments by remember(taskToEdit) {
+    var attachments by rememberSaveable(taskToEdit) {
         mutableStateOf(taskToEdit?.attachmentPath ?: emptyList())
     }
 
-    var showDatePicker by remember { mutableStateOf(false) }
-    var showTimePicker by remember { mutableStateOf(false) }
+    var showDatePicker by rememberSaveable { mutableStateOf(false) }
+    var showTimePicker by rememberSaveable { mutableStateOf(false) }
 
-    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
+    val dateFormatter = rememberSaveable { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
     val context = LocalContext.current
 
     val launcher = rememberLauncherForActivityResult(
@@ -146,18 +147,21 @@ fun AddTask(
                     value = title,
                     onValueChange = { title = it },
                     label = { Text("Title") },
-                    singleLine = true
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Description") }
+                    label = { Text("Description") },
+                    modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = category,
                     onValueChange = { category = it },
                     label = { Text("Category") },
-                    singleLine = true
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Divider()
