@@ -58,6 +58,7 @@ dependencies {
     //implementation(libs.androidx.room.compiler)
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.foundation)
 
     val room_version = "2.6.1" // Use the current stable version for 2026
 

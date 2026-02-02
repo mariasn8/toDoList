@@ -3,9 +3,11 @@ package com.example.todolist.screens
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachFile
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
@@ -22,6 +24,7 @@ import com.example.todolist.DB.Task
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.material3.FilterChip
 
 @Composable
 fun TaskList(
@@ -36,6 +39,11 @@ fun TaskList(
 
     var hideCompleted by remember { mutableStateOf(false) }
 
+    val allCategories = remember(tasks) {
+        tasks.map { it.category }.distinct().sorted()
+    }
+    var selectedCategories by remember { mutableStateOf(emptySet<String>()) }
+
     Column(
         modifier = modifier.fillMaxSize()
     ) {
@@ -43,7 +51,7 @@ fun TaskList(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween // Places text on left, button on right
         ) {
@@ -70,10 +78,59 @@ fun TaskList(
             singleLine = true
         )
 
-        val tasksToShow = if (hideCompleted) {
-            tasks.filter { !it.isCompleted }
-        } else {
-            tasks
+        if (allCategories.isNotEmpty()) {
+            Text(
+                text = "Filter by Category:",
+                style = MaterialTheme.typography.labelMedium,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(allCategories) { category ->
+                    val isSelected = category in selectedCategories
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = {
+                            selectedCategories = if (isSelected) {
+                                selectedCategories - category // Unselect
+                            } else {
+                                selectedCategories + category // Select
+                            }
+                        },
+                        label = { Text(category) },
+                        leadingIcon = if (isSelected) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Selected",
+                                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                )
+                            }
+                        } else null
+                    )
+                }
+            }
+        }
+
+        val tasksToShow = remember(tasks, hideCompleted, searchQuery, selectedCategories) {
+            tasks.filter { task ->
+                // 1. Check Hide Completed
+                val matchesCompletion = !hideCompleted || !task.isCompleted
+
+                // 2. Check Search Query (Title or Description)
+                val matchesSearch = task.title.contains(searchQuery, ignoreCase = true) ||
+                        task.description.contains(searchQuery, ignoreCase = true)
+
+                // 3. Check Category (If no categories selected, show alld)
+                val matchesCategory = selectedCategories.isEmpty() || task.category in selectedCategories
+
+                matchesCompletion && matchesSearch && matchesCategory
+            }
         }
 
         // 3. The Task List
@@ -102,8 +159,8 @@ fun TaskItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp)
-            .clickable { onEdit() }, // Clicking the whole card also edits
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+            //.clickable { onEdit() }, // Clicking the whole card also edits
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -194,6 +251,6 @@ fun TaskItem(
 }
 // Helper to make the Long timestamp readable
 fun formatDate(timestamp: Long): String {
-    val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
     return sdf.format(Date(timestamp))
 }

@@ -18,11 +18,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.todolist.DB.Task
-import com.example.todolist.FileHelper // Import your new helper
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,7 +38,7 @@ fun AddTask(
 
     // Default to tomorrow if new, or use existing due time
     var dueTime by remember(taskToEdit) {
-        mutableLongStateOf(taskToEdit?.dueTime ?: (System.currentTimeMillis() + 86400000))
+        mutableLongStateOf(taskToEdit?.dueTime ?: (System.currentTimeMillis() )) // + 86400000
     }
 
     var isNotificationEnabled by remember(taskToEdit) {
@@ -53,7 +53,9 @@ fun AddTask(
     }
 
     var showDatePicker by remember { mutableStateOf(false) }
-    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+    var showTimePicker by remember { mutableStateOf(false) }
+
+    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
     val context = LocalContext.current
 
     val launcher = rememberLauncherForActivityResult(
@@ -76,14 +78,58 @@ fun AddTask(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let { dueTime = it }
+                    //datePickerState.selectedDateMillis?.let { dueTime = it }
+                    datePickerState.selectedDateMillis?.let { newDateMillis ->
+                        // Merge new DATE with existing TIME
+                        val currentCalendar = Calendar.getInstance().apply { timeInMillis = dueTime }
+                        val newCalendar = Calendar.getInstance().apply { timeInMillis = newDateMillis }
+
+                        // Set Year, Month, Day from new selection
+                        currentCalendar.set(Calendar.YEAR, newCalendar.get(Calendar.YEAR))
+                        currentCalendar.set(Calendar.MONTH, newCalendar.get(Calendar.MONTH))
+                        currentCalendar.set(Calendar.DAY_OF_MONTH, newCalendar.get(Calendar.DAY_OF_MONTH))
+
+                        dueTime = currentCalendar.timeInMillis
+                    }
                     showDatePicker = false
+                    showTimePicker = true
                 }) { Text("OK") }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
             }
         ) { DatePicker(state = datePickerState) }
+    }
+
+    // Time Picker
+    if (showTimePicker) {
+        val calendar = Calendar.getInstance().apply { timeInMillis = dueTime }
+        val timePickerState = rememberTimePickerState(
+            initialHour = calendar.get(Calendar.HOUR_OF_DAY),
+            initialMinute = calendar.get(Calendar.MINUTE),
+            is24Hour = true
+        )
+
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    // Merge new TIME with existing DATE
+                    val newCalendar = Calendar.getInstance().apply { timeInMillis = dueTime }
+                    newCalendar.set(Calendar.HOUR_OF_DAY, timePickerState.hour)
+                    newCalendar.set(Calendar.MINUTE, timePickerState.minute)
+
+                    dueTime = newCalendar.timeInMillis
+                    showTimePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) { Text("Cancel") }
+            },
+            text = {
+                TimePicker(state = timePickerState)
+            }
+        )
     }
 
     AlertDialog(

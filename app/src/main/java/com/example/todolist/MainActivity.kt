@@ -17,24 +17,43 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
-import com.example.todolist.DB.Task
-import com.example.todolist.DB.ToDoDatabase
-import com.example.todolist.screens.TaskList
+import com.example.todolist.DB.*
+import com.example.todolist.screens.*
+import com.example.todolist.*
 import com.example.todolist.ui.theme.ToDoListTheme
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.os.Build
+import android.Manifest
+import androidx.core.app.ActivityCompat
+import android.content.pm.PackageManager
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // 1. Create Channel
+        createNotificationChannel()
+
+        // 2. Request Permission (Simple version)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+            }
+        }
+
         enableEdgeToEdge()
 
-        // 1. Initialize DB and ViewModel
+        // 3. Initialize DB and ViewModel
         val database = ToDoDatabase.getDatabase(this)
         val viewModelFactory = ToDoViewModelFactory(database.taskDao())
         val viewModel = ViewModelProvider(this, viewModelFactory)[ToDoViewModel::class.java]
 
         setContent {
             ToDoListTheme {
-                // --- STATE VARIABLES ---
+                // State variables
                 var showDialog by remember { mutableStateOf(false) }
                 var searchQuery by remember { mutableStateOf("") }
 
@@ -42,6 +61,21 @@ class MainActivity : ComponentActivity() {
 
                 // Observe the list of tasks from the database
                 val tasks by viewModel.tasks.observeAsState(initial = emptyList())
+
+                val context = LocalContext.current
+
+                LaunchedEffect(intent) {
+                    val taskIdToOpen = intent.getIntExtra("TASK_ID_TO_OPEN", -1)
+                    if (taskIdToOpen != -1) {
+                        // Logic to find task by ID and open AddTask dialog
+                        // You usually need to ask your ViewModel to find the task
+                        viewModel.getTaskById(taskIdToOpen) { task ->
+                            // Setup your state to open the edit dialog
+                            taskToEdit = task
+                            showDialog = true
+                        }
+                    }
+                }
 
                 Scaffold(
                     floatingActionButton = {
@@ -65,7 +99,9 @@ class MainActivity : ComponentActivity() {
                         onTaskChecked = { task, isChecked ->
                             viewModel.updateTask(task.copy(isCompleted = isChecked))
                         },
-                        onDeleteTask = { task -> viewModel.deleteTask(task) },
+                        onDeleteTask = { task ->
+                            viewModel.deleteTask(task)
+                            NotificationScheduler.cancelNotification(context, task) },
                         onEditTask = { task ->
                             taskToEdit = task
                             showDialog = true
@@ -83,9 +119,11 @@ class MainActivity : ComponentActivity() {
                                 if (task.id == 0) {
                                     // ID is 0, NEW task
                                     viewModel.addTask(task)
+                                    NotificationScheduler.scheduleNotification(context, task)
                                 } else {
                                     // ID is not 0, update EXISTING task
                                     viewModel.updateTask(task)
+                                    NotificationScheduler.scheduleNotification(context, task)
                                 }
                                 showDialog = false
                             }
@@ -93,6 +131,19 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val name = "Task Notifications"
+            val descriptionText = "Channel for ToDo List reminders"
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel("task_channel", name, importance).apply {
+                description = descriptionText
+            }
+            val notificationManager = getSystemService(NotificationManager::class.java)
+            notificationManager.createNotificationChannel(channel)
         }
     }
 }

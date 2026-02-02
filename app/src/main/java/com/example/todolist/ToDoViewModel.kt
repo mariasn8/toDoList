@@ -50,9 +50,16 @@ class ToDoViewModel(private val dao: TaskDAO) : ViewModel() {
             dao.deleteTask(task)
         }
     }
+
+    fun getTaskById(id: Int, onResult: (Task?) -> Unit) {
+        viewModelScope.launch {
+            val task = dao.getTaskById(id)
+            onResult(task)
+        }
+    }
 }
 
-// Boilerplate Factory to allow passing the DAO into the ViewModel
+// Allows passing the DAO into the ViewModel
 class ToDoViewModelFactory(private val dao: TaskDAO) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ToDoViewModel::class.java)) {
