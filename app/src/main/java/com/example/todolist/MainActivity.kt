@@ -13,7 +13,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
@@ -58,7 +57,7 @@ class MainActivity : ComponentActivity() {
                     val taskIdToOpen = intent.getIntExtra("TASK_ID_TO_OPEN", -1)
                     if (taskIdToOpen != -1) {
                         // Logic to find task by ID and open AddTask dialog
-                        // You usually need to ask your ViewModel to find the task
+                        // Need to ask ViewModel to find the task
                         viewModel.getTaskById(taskIdToOpen) { task ->
                             // Setup your state to open the edit dialog
                             taskToEdit = task

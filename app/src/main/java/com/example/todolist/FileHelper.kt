@@ -38,6 +38,20 @@ object FileHelper {
         }
     }
 
+    fun deleteFile(path: String): Boolean {
+        return try {
+            val file = File(path)
+            if (file.exists()) {
+                file.delete()
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
     fun openFile(context: Context, path: String) {
         val file = File(path)
         if (file.exists()) {
@@ -62,7 +76,7 @@ object FileHelper {
             try {
                 context.startActivity(intent)
             } catch (e: Exception) {
-                // Optional: Toast.makeText(context, "No app found to open this file", Toast.LENGTH_SHORT).show()
+
                 e.printStackTrace()
             }
         }

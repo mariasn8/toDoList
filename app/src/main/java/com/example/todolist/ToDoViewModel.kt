@@ -32,7 +32,7 @@ class ToDoViewModel(private val dao: TaskDAO) : ViewModel() {
         _searchQuery.value = query
     }
 
-    // Requirements: Create, Delete, Edit tasks
+    // Create, Delete, Edit tasks
     fun addTask(task: Task) {
         viewModelScope.launch {
             dao.insertTask(task)
@@ -47,6 +47,18 @@ class ToDoViewModel(private val dao: TaskDAO) : ViewModel() {
 
     fun deleteTask(task: Task) {
         viewModelScope.launch {
+            // 1. Loop through all attachments of the task being deleted
+            task.attachmentPath.forEach { path ->
+                // 2. Check if this file is used by any OTHER task
+                val usageCount = dao.countTasksUsingAttachment(path, task.id)
+
+                // 3. If no other task uses it, it is safe to delete the physical file
+                if (usageCount == 0) {
+                    FileHelper.deleteFile(path)
+                }
+            }
+
+            // 4. Finally, remove the task from the database
             dao.deleteTask(task)
         }
     }

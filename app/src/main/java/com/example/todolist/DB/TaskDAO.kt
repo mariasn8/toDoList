@@ -31,4 +31,7 @@ interface TaskDAO {
 
     @Query("SELECT * FROM tasks WHERE id = :id")
     suspend fun getTaskById(id: Int): Task?
+
+    @Query("SELECT COUNT(*) FROM tasks WHERE attachmentPath LIKE '%' || :path || '%' AND id != :excludedTaskId")
+    suspend fun countTasksUsingAttachment(path: String, excludedTaskId: Int): Int
 }
