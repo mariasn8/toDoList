@@ -15,4 +15,5 @@ The app has the options to:
 - hide completed tasks
 - select what categories are visible from the list
 - choose how many minutes before the deadline the notification should appear.
+
 It also has a search bar on top and the tasks are ordered by due time, with the most urgent ones on top.
